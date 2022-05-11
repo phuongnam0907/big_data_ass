@@ -1,108 +1,254 @@
 from tkinter import *
-from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter import messagebox
+from tkinter import filedialog
+import PIL.Image, PIL.ImageTk
+import cv2
 
 BG_COLOR = 'white'
 
+class videoGUI:
 
-def set_text():
-    text_speed_avg.set(1230)
-    text_car_count.set(1231)
-    text_hp_para_1.set(1232)
-    text_hp_para_2.set(1233)
-    text_hp_para_3.set(1234)
+    def __init__(self, window, window_title):
+
+        self.window = window
+        self.window.title(window_title)
+
+        self.window.rowconfigure(0, minsize=300, weight=1)
+        self.window.columnconfigure(1, minsize=600, weight=1)
+
+        top_frame_0 = Frame(self.window, bd=1)
+        top_frame_0.grid(row=0, column=0)
+
+        top_frame_1 = Frame(self.window, bd=1)
+        top_frame_1.grid(row=0, column=1)
+
+        top_frame_2 = Frame(self.window, bd=1)
+        top_frame_2.grid(row=0, column=2)
+
+        top_frame_3 = Frame(self.window, bd=1)
+        top_frame_3.grid(row=0, column=3, ipadx=5)
+
+        bottom_frame_0 = Frame(self.window)
+        bottom_frame_0.grid(row=1, column=0)
+
+        bottom_frame_1 = Frame(self.window)
+        bottom_frame_1.grid(row=1, column=1, ipadx=5)
+
+        bottom_frame_2 = Frame(self.window)
+        bottom_frame_2.grid(row=1, column=2)
+
+        bottom_frame_3 = Frame(self.window)
+        bottom_frame_3.grid(row=1, column=3)
+
+        self.pause_1 = False  # Parameter that controls pause button
+        self.pause_2 = False  # Parameter that controls pause button
+
+        self.canvas_1 = Canvas(top_frame_1)
+        self.canvas_1.pack()
+        self.canvas_1.config(width=400, height=300)
+        self.canvas_2 = Canvas(top_frame_2)
+        self.canvas_2.pack()
+        self.canvas_2.config(width=400, height=300)
+
+        # Select Button
+        self.btn_select_1 = Button(bottom_frame_1, text="Select video", width=15, command=self.open_file_1)
+        self.btn_select_1.grid(row=0, column=0)
+        self.btn_select_2 = Button(bottom_frame_2, text="Select video", width=15, command=self.open_file_2)
+        self.btn_select_2.grid(row=0, column=0)
+
+        # Play Button
+        self.btn_play_1 = Button(bottom_frame_1, text="Play", width=15, command=self.play_video_1)
+        self.btn_play_1.grid(row=0, column=1)
+        self.btn_play_2 = Button(bottom_frame_2, text="Play", width=15, command=self.play_video_2)
+        self.btn_play_2.grid(row=0, column=1)
+
+        # Pause Button
+        self.btn_pause_1 = Button(bottom_frame_1, text="Pause", width=15, command=self.pause_video_1)
+        self.btn_pause_1.grid(row=0, column=2)
+        self.btn_pause_2 = Button(bottom_frame_2, text="Pause", width=15, command=self.pause_video_2)
+        self.btn_pause_2.grid(row=0, column=2)
+
+        # Resume Button
+        self.btn_resume_1 = Button(bottom_frame_1, text="Resume", width=15, command=self.resume_video_1)
+        self.btn_resume_1.grid(row=0, column=3)
+        self.btn_resume_2 = Button(bottom_frame_2, text="Resume", width=15, command=self.resume_video_2)
+        self.btn_resume_2.grid(row=0, column=3)
+
+        # Dropdown Mode
+        options = ["Counting Vehicle", "Measuring"]
+        clicked_1 = StringVar()
+        clicked_2 = StringVar()
+        clicked_1.set("Select Mode")
+        clicked_2.set("Select Mode")
+
+        dropdown_1 = OptionMenu(bottom_frame_1, clicked_1, *options)
+        dropdown_1.configure(widt=20)
+        dropdown_1.grid(row=0, column=4)
+
+        dropdown_2 = OptionMenu(bottom_frame_2, clicked_2, *options)
+        dropdown_2.configure(widt=20)
+        dropdown_2.grid(row=0, column=4)
+
+        text_speed_avg_1 = StringVar()
+        text_car_count_1 = StringVar()
+        text_hp_para_1_1 = StringVar()
+        text_hp_para_2_1 = StringVar()
+        text_hp_para_3_1 = StringVar()
+        text_speed_avg_2 = StringVar()
+        text_car_count_2 = StringVar()
+        text_hp_para_1_2 = StringVar()
+        text_hp_para_2_2 = StringVar()
+        text_hp_para_3_2 = StringVar()
+
+        label_speed_avg_1 = Label(top_frame_0, text='Tốc độ trung bình:')
+        label_car_count_1 = Label(top_frame_0, text='Số lượng xe:')
+        label_hp_para_1_1 = Label(top_frame_0, text='Hyper Parameter 01:')
+        label_hp_para_2_1 = Label(top_frame_0, text='Hyper Parameter 02:')
+        label_hp_para_3_1 = Label(top_frame_0, text='Hyper Parameter 03:')
+        label_speed_avg_2 = Label(top_frame_3, text='Tốc độ trung bình:')
+        label_car_count_2 = Label(top_frame_3, text='Số lượng xe:')
+        label_hp_para_1_2 = Label(top_frame_3, text='Hyper Parameter 01:')
+        label_hp_para_2_2 = Label(top_frame_3, text='Hyper Parameter 02:')
+        label_hp_para_3_2 = Label(top_frame_3, text='Hyper Parameter 03:')
+
+        entry_speed_avg_1 = Entry(top_frame_0, textvariable=text_speed_avg_1,
+                                background=BG_COLOR, borderwidth=0, highlightthickness=0)
+        entry_car_count_1 = Entry(top_frame_0, textvariable=text_car_count_1,
+                                background=BG_COLOR, borderwidth=0, highlightthickness=0)
+        entry_hp_para_1_1 = Entry(top_frame_0, textvariable=text_hp_para_1_1)
+        entry_hp_para_2_1 = Entry(top_frame_0, textvariable=text_hp_para_2_1)
+        entry_hp_para_3_1 = Entry(top_frame_0, textvariable=text_hp_para_3_1)
+
+        entry_speed_avg_2 = Entry(top_frame_3, textvariable=text_speed_avg_2,
+                                  background=BG_COLOR, borderwidth=0, highlightthickness=0)
+        entry_car_count_2 = Entry(top_frame_3, textvariable=text_car_count_2,
+                                  background=BG_COLOR, borderwidth=0, highlightthickness=0)
+        entry_hp_para_1_2 = Entry(top_frame_3, textvariable=text_hp_para_1_2)
+        entry_hp_para_2_2 = Entry(top_frame_3, textvariable=text_hp_para_2_2)
+        entry_hp_para_3_2 = Entry(top_frame_3, textvariable=text_hp_para_3_2)
+
+        button_export_1 = Button(bottom_frame_0, text="Export to Excel")
+        button_export_2 = Button(bottom_frame_3, text="Export to Excel")
+
+        label_speed_avg_1.grid(row=0, column=0, sticky="n", padx=5, pady=5)
+        label_car_count_1.grid(row=1, column=0, sticky="s", padx=5, pady=5)
+        label_hp_para_1_1.grid(row=2, column=0, sticky="e", padx=5, pady=5)
+        label_hp_para_2_1.grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        label_hp_para_3_1.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
+        button_export_1.grid(row=5, column=0, sticky="nsew", padx=5, pady=5)
+
+        label_speed_avg_2.grid(row=0, column=0, sticky="n", padx=5, pady=5)
+        label_car_count_2.grid(row=1, column=0, sticky="s", padx=5, pady=5)
+        label_hp_para_1_2.grid(row=2, column=0, sticky="e", padx=5, pady=5)
+        label_hp_para_2_2.grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        label_hp_para_3_2.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
+        button_export_2.grid(row=5, column=0, sticky="nsew", padx=5, pady=5)
+
+        entry_speed_avg_2.grid(row=0, column=1, sticky="n", padx=0, pady=7)
+        entry_car_count_2.grid(row=1, column=1, sticky="n", padx=0, pady=7)
+        entry_hp_para_1_2.grid(row=2, column=1, sticky="n", padx=0, pady=7)
+        entry_hp_para_2_2.grid(row=3, column=1, sticky="n", padx=0, pady=7)
+        entry_hp_para_3_2.grid(row=4, column=1, sticky="n", padx=0, pady=7)
+
+        entry_speed_avg_1.grid(row=0, column=1, sticky="n", padx=0, pady=7)
+        entry_car_count_1.grid(row=1, column=1, sticky="n", padx=0, pady=7)
+        entry_hp_para_1_1.grid(row=2, column=1, sticky="n", padx=0, pady=7)
+        entry_hp_para_2_1.grid(row=3, column=1, sticky="n", padx=0, pady=7)
+        entry_hp_para_3_1.grid(row=4, column=1, sticky="n", padx=0, pady=7)
+
+        self.delay = 10  # ms
+
+        self.window.mainloop()
+
+    def open_file_1(self):
+        self.pause_1 = False
+        self.filename_1 = filedialog.askopenfilename(title="Select Video",
+                                                     filetypes=(
+                                                         ("MP4 files", "*.mp4"),
+                                                         ("WMV files", "*.wmv"),
+                                                         ("AVI files", "*.avi")))
+        print(self.filename_1)
+
+        # Open the video file
+        self.cap_1 = cv2.VideoCapture(self.filename_1)
+
+    def open_file_2(self):
+        self.pause_2 = False
+        self.filename_2 = filedialog.askopenfilename(title="Select Video",
+                                                     filetypes=(
+                                                         ("MP4 files", "*.mp4"),
+                                                         ("WMV files", "*.wmv"),
+                                                         ("AVI files", "*.avi")))
+        print(self.filename_2)
+
+        # Open the video file
+        self.cap_2 = cv2.VideoCapture(self.filename_2)
 
 
-window = Tk()
-window.title("VEHICLE COUNTING AND SPEED ESTIMATING SYSTEM")
+    def get_frame_1(self):  # get only one frame
+        try:
+            if self.cap_1.isOpened():
+                ret, frame = self.cap_1.read()
+                return ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        except:
+            # messagebox.showerror(title='Video_1 file not found', message='Please select a video file.')
+            print("End of video_1")
 
-window.rowconfigure(0, minsize=800, weight=1)
-window.columnconfigure(1, minsize=800, weight=1)
-window.configure(background=BG_COLOR)
+    def get_frame_2(self):  # get only one frame
+        try:
+            if self.cap_2.isOpened():
+                ret, frame = self.cap_2.read()
+                return ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        except:
+            # messagebox.showerror(title='Video_2 file not found', message='Please select a video file.')
+            print("End of video_2")
 
-left_form = Frame(window, relief=RAISED, bd=1, background=BG_COLOR)
-right_form = Frame(window, relief=RAISED, bd=1, background=BG_COLOR)
+    def play_video_1(self):
+        # Get a frame from the video source, and go to the next frame automatically
+        ret, frame = self.get_frame_1()
+        if ret:
+            self.photo_1 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
+            self.canvas_1.create_image(0, 0, image=self.photo_1, anchor=NW)
 
-# txt_edit = tk.Text(window)
-# frm_buttons = tk.Frame(window, relief=tk.RAISED, bd=2)
-# btn_open = tk.Button(frm_buttons, text="Open", command=open_file)
-# btn_save = tk.Button(frm_buttons, text="Save As...", command=save_file)
+        if not self.pause_1:
+            self.window.after(self.delay, self.play_video_1)
 
-# btn_open.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-# btn_save.grid(row=1, column=0, sticky="ew", padx=5)
+    def pause_video_1(self):
+        self.pause_1 = True
 
-# frm_buttons.grid(row=0, column=0, sticky="ns")
-# txt_edit.grid(row=0, column=1, sticky="nsew")
+    # Addition
+    def resume_video_1(self):
+        self.pause_1 = False
+        self.play_video_1()
 
-######################## LEFT SIDE ############################
+    def play_video_2(self):
+        # Get a frame from the video source, and go to the next frame automatically
+        ret, frame = self.get_frame_2()
+        if ret:
+            self.photo_2 = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(frame))
+            self.canvas_2.create_image(0, 0, image=self.photo_2, anchor=NW)
 
-text_speed_avg = StringVar()
-text_car_count = StringVar()
-text_hp_para_1 = StringVar()
-text_hp_para_2 = StringVar()
-text_hp_para_3 = StringVar()
+        if not self.pause_2:
+            self.window.after(self.delay, self.play_video_2)
 
-label_speed_avg = Label(left_form, background=BG_COLOR, text='Tốc độ trung bình:')
-label_car_count = Label(left_form, background=BG_COLOR, text='Số lượng xe:')
-label_hp_para_1 = Label(left_form, background=BG_COLOR, text='Hyper Parameter 01:')
-label_hp_para_2 = Label(left_form, background=BG_COLOR, text='Hyper Parameter 02:')
-label_hp_para_3 = Label(left_form, background=BG_COLOR, text='Hyper Parameter 03:')
+    def pause_video_2(self):
+        self.pause_2 = True
 
-entry_speed_avg = Entry(left_form, textvariable=text_speed_avg,
-                        background=BG_COLOR, borderwidth=0, highlightthickness=0)
-entry_car_count = Entry(left_form, textvariable=text_car_count,
-                        background=BG_COLOR, borderwidth=0, highlightthickness=0)
-entry_hp_para_1 = Entry(left_form, textvariable=text_hp_para_1,
-                        background=BG_COLOR, borderwidth=0, highlightthickness=0)
-entry_hp_para_2 = Entry(left_form, textvariable=text_hp_para_2,
-                        background=BG_COLOR, borderwidth=0, highlightthickness=0)
-entry_hp_para_3 = Entry(left_form, textvariable=text_hp_para_3,
-                        background=BG_COLOR, borderwidth=0, highlightthickness=0)
+    # Addition
+    def resume_video_2(self):
+        self.pause_2 = False
+        self.play_video_2()
 
-button_export = Button(left_form, text="Export to Excel", command=set_text)
+    # Release the video source when the object is destroyed
+    def __del__(self):
+        if self.cap_1.isOpened():
+            self.cap_1.release()
+        if self.cap_2.isOpened():
+            self.cap_2.release()
 
-label_speed_avg.grid(row=0, column=0, sticky="n", padx=5, pady=5)
-label_car_count.grid(row=1, column=0, sticky="s", padx=5, pady=5)
-label_hp_para_1.grid(row=2, column=0, sticky="e", padx=5, pady=5)
-label_hp_para_2.grid(row=3, column=0, sticky="w", padx=5, pady=5)
-label_hp_para_3.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
-button_export.grid(row=5, column=0, sticky="s", padx=5, pady=5)
 
-# entry_speed_avg.place(width=1)
-# entry_car_count.place(width=1)
-# entry_hp_para_1.place(width=1)
-# entry_hp_para_2.place(width=1)
-# entry_hp_para_3.place(width=1)
+##### End Class #####
 
-entry_speed_avg.grid(row=0, column=1, sticky="n", padx=0, pady=7)
-entry_car_count.grid(row=1, column=1, sticky="n", padx=0, pady=7)
-entry_hp_para_1.grid(row=2, column=1, sticky="n", padx=0, pady=7)
-entry_hp_para_2.grid(row=3, column=1, sticky="n", padx=0, pady=7)
-entry_hp_para_3.grid(row=4, column=1, sticky="n", padx=0, pady=7)
 
-######################## RIGHT SIDE ############################
-
-label_monitor = Label(right_form, background=BG_COLOR, text='Monitor 1')
-label_source = Label(right_form, background=BG_COLOR, text='Source:')
-label_mode = Label(right_form, background=BG_COLOR, text='Mode:')
-
-button_open_source = Button(right_form, text="Video or Camera", command=set_text)
-
-options = ["Counting Vehicle", "Measuring"]
-clicked = StringVar()
-clicked.set("Select Mode")
-dropdown = OptionMenu(right_form, clicked, *options)
-dropdown.configure(widt=20)
-
-label_monitor.grid(row=0, column=0, sticky="n", padx=5, pady=5)
-label_source.grid(row=0, column=1, sticky="n", padx=5, pady=5)
-label_mode.grid(row=0, column=2, sticky="s", padx=5, pady=5)
-
-button_open_source.grid(row=1, column=1, sticky="s", padx=5, pady=5)
-dropdown.grid(row=1, column=2, sticky="s", padx=5, pady=5)
-
-######################## END ############################
-
-left_form.grid(row=0, column=0, sticky="nsew")
-right_form.grid(row=0, column=1, sticky="nsew")
-
-window.mainloop()
+# Create a window and pass it to videoGUI Class
+videoGUI(Tk(), "VEHICLE COUNTING AND SPEED ESTIMATING SYSTEM")
